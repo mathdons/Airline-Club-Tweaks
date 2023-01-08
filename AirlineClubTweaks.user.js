@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Airline Club Tweaks
 // @namespace    http://tampermonkey.net/
-// @version      0.0.1
+// @version      0.1.2
 // @description  Fly better
 // @author       mathd
 // @match        https://*.airline-club.com/
@@ -140,16 +140,16 @@
                     {
                         if (deltaChange > 0) // current airline gaining
                         {
-                            toInsert = "▽" + deltaChange + "<br />(∞ wks)";
+                            toInsert = "▽" + deltaChange + "<br>(∞ wks)";
                         } else {
-                            toInsert = "⚠" + deltaChange + "<br />(" + weeks + "wks)";
+                            toInsert = "⚠" + deltaChange + "<br>(" + weeks + "wks)";
                         }
                     } else { // current airline below this rival
                         if (deltaChange > 0) // current airline gaining
                         {
-                            toInsert = "△" + deltaChange + "<br />(" + weeks + "wks)";
+                            toInsert = "△" + deltaChange + "<br>(" + weeks + "wks)";
                         } else {
-                            toInsert = "▽" + deltaChange + "<br />(∞ wks)";
+                            toInsert = "▽" + deltaChange + "<br>(∞ wks)";
                         }
                     }
 
