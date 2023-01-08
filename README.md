@@ -1,6 +1,7 @@
 # Airline-Club-Tweaks
 
 For feedback/bugs/suggestions, poke Air Primal/Air Patate on Discord.
+
 Tested on Chrome/Tampermonkey, should work on Firefox/Greasemonkey
 
 v0.0.1
