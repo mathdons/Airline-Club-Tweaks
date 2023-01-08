@@ -6,7 +6,8 @@
 // @author       mathd
 // @match        https://*.airline-club.com/
 // @icon         https://www.google.com/s2/favicons?domain=airline-club.com
-// @downloadURL      
+// @downloadURL  https://raw.githubusercontent.com/mathdons/Airline-Club-Tweaks/main/AirlineClubTweaks.js
+// @updateURL    https://raw.githubusercontent.com/mathdons/Airline-Club-Tweaks/main/AirlineClubTweaks.js
 // @grant        none
 // ==/UserScript==
 
@@ -164,7 +165,6 @@
         });
 
     }
-    // Your code here...
 
     function log(toLog)
     {
