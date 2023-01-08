@@ -15,7 +15,7 @@
 
 (function() {
     'use strict';
-    var debug = true;
+    var debug = false;
 
     //waitForKeyElements("#airportCanvas", airportCanvasShown);
 
