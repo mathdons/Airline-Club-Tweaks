@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Airline Club Tweaks
 // @namespace    http://tampermonkey.net/
-// @version      0.1.2
+// @version      0.1.21
 // @description  Fly better
 // @author       mathd
 // @match        https://*.airline-club.com/
@@ -135,6 +135,9 @@
                     var deltaTotal = currentAirlineValue - championData.get(rivalName);
                     var deltaChange = currentAirlineChange - loyalistData.get(rivalName);
                     var weeks = -Math.round(deltaTotal / deltaChange);
+                    
+                    if (weeks > 10000) weeks = ">10k ";
+                    
 
                     if (deltaTotal > 0) // current airline above this rival
                     {
