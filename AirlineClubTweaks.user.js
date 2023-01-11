@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Airline Club Tweaks
 // @namespace    http://tampermonkey.net/
-// @version      0.1.3
+// @version      0.1.22
 // @description  Fly better
 // @author       mathd
 // @match        https://*.airline-club.com/
