@@ -6,7 +6,7 @@ For feedback/bugs/suggestions, poke Air Primal/Air Patate on Discord.
 
 Tested on Chrome/Tampermonkey, should work on Firefox/Greasemonkey
 
-## v0.1.1x
+## v0.1.21
 Loyalist Delta in Airport view:
 - Shows the true loyalist change for the current airline (current airline gain + rival gain) for each available rival. 
   - △ indicates the current airline is behind the rival and gaining, 
