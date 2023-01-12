@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Airline Club Tweaks
 // @namespace    http://tampermonkey.net/
-// @version      0.1.24
+// @version      0.1.25
 // @description  Fly better
 // @author       mathd
 // @match        https://*.airline-club.com/
@@ -15,7 +15,7 @@
 
 (function () {
 	"use strict";
-	var debug = false;
+	var debug = true;
 
 	//waitForKeyElements("#airportCanvas", airportCanvasShown);
 
@@ -171,7 +171,6 @@
 
 	function officeCanvasShown() {
 		var basesTableRoot = $('h4:contains("Airline Bases")').next("div");
-
 		if ($(".tweakOffice").length <= 0) {
 			$(basesTableRoot).find(".table-header .cell:eq(0)").css("width", "7%");
 			$(basesTableRoot).find(".table-header .cell:eq(1)").css("width", "23%");
@@ -214,6 +213,7 @@
 					.text()
 					.match(/\(([^)]+)\)/)[1];
 				let airportStats = airlineLinks.getStats(airport);
+				log(airportStats, true);
 				$(this)
 					.find(".cell:eq(4)")
 					.after(
@@ -275,11 +275,23 @@
 			if (capString == "") return false;
 
 			link.frequency = capString.match(/\(([^)]+)\)/)[1];
-			link.capacity = capString.split(" ")[0];
-			link.pax = $(this).find(`.cell:eq(${columns.pax})`).text();
+			if (vanilla) {
+				link.capacity = capString.split("(")[0];
+				link.fromAirport = $(this)
+					.find(`.cell:eq(${columns.fromAirport})`)
+					.text()
+					.match(/\(([^)]+)\)/)[1];
+				link.toAirport = $(this)
+					.find(`.cell:eq(${columns.toAirport})`)
+					.text()
+					.match(/\(([^)]+)\)/)[1];
+			} else {
+				link.capacity = capString.split(" ")[0];
+				link.fromAirport = $(this).find(`.cell:eq(${columns.fromAirport})`).text().trim().split(" ")[0];
+				link.toAirport = $(this).find(`.cell:eq(${columns.toAirport})`).text().trim().split(" ")[0];
+			}
 
-			link.fromAirport = $(this).find(`.cell:eq(${columns.fromAirport})`).text().trim().split(" ")[0];
-			link.toAirport = $(this).find(`.cell:eq(${columns.toAirport})`).text().trim().split(" ")[0];
+			link.pax = $(this).find(`.cell:eq(${columns.pax})`).text();
 
 			link.distance = $(this).find(`.cell:eq(${columns.distance})`).text().replace("km", "");
 
@@ -386,10 +398,15 @@
 		});
 	}
 
-	function log(toLog) {
+	function log(toLog, isObject = false) {
 		if (debug) {
 			const d = new Date();
-			console.log("TWEAK \t" + d.toLocaleTimeString("fr-fr") + "." + String(d.getMilliseconds()).padStart(3, "0") + "\t" + toLog);
+			let str = "TWEAK \t" + d.toLocaleTimeString("fr-fr") + "." + String(d.getMilliseconds()).padStart(3, "0") + "\t";
+
+			if (isObject) {
+				console.log(str);
+				console.dir(toLog);
+			} else console.dir(str + toLog);
 		}
 	}
 
