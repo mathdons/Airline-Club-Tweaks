@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Airline Club Tweaks
 // @namespace    http://tampermonkey.net/
-// @version      0.1.22
+// @version      0.1.24
 // @description  Fly better
 // @author       mathd
 // @match        https://*.airline-club.com/
@@ -52,6 +52,7 @@
 	function main() {
 		airlineLinks = new Links();
 		setCurrentAirline();
+		addButtons();
 
 		const linksMutationConfig = {
 			attributes: true,
@@ -79,6 +80,18 @@
 		};
 		const officeViewObserver = new MutationObserver(officeViewMutated);
 		officeViewObserver.observe($("#officeCanvas")[0], officeMutationConfig);
+	}
+
+	function addButtons() {
+		var toAdd = '<span style="margin-left: 7px;"></span>';
+		var buttons = $("#main-tabs .tab-icon").each(function () {
+			var link = $(this).data("link");
+			if (link == "country" || link == "airplane" || link == "link" || link == "office" || link == "bank" || link == "oil" || link == "/") {
+				toAdd += '<span class="clickable" style="margin-left: 3px; padding: 0 3px;" title="' + link + '">' + $(this)[0].outerHTML + "</span>";
+			}
+		});
+
+		$(".desktopOnly .topBarDetails span span").first().parent().append(toAdd);
 	}
 
 	function officeViewMutated(mutationList, observer) {
