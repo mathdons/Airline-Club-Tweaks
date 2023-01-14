@@ -21,3 +21,11 @@ Base statistics added to Office view, with number of routes, number of pax, LF/S
 
 ## v0.1.24
 Adds top bar shortcut buttons to main pages
+
+## v0.1.27
+Adds a set of filter in the hangar view based on Usage and Condition
+- One slider to set the minimum and maximum values for each Usage and Condition. Can be combined (ex: all planes with low usage and low condition)
+- One button to set the condition filter to planes which are soon going to be automatically replaced (between target set in the office and target +5)
+  - Need to visit the office first to store the value
+  - Known issue: after changing the value in the office, the value is not automatically refreshed, need to reopen the office view again
+- One button to reset all sliders
