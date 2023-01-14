@@ -1,22 +1,27 @@
 // ==UserScript==
 // @name         Airline Club Tweaks
 // @namespace    http://tampermonkey.net/
-// @version      0.1.25
+// @version      0.1.27
 // @description  Fly better
 // @author       mathd
 // @match        https://*.airline-club.com/
 // @icon         https://www.google.com/s2/favicons?domain=airline-club.com
 // @downloadURL  https://raw.githubusercontent.com/mathdons/Airline-Club-Tweaks/main/AirlineClubTweaks.user.js
 // @updateURL    https://raw.githubusercontent.com/mathdons/Airline-Club-Tweaks/main/AirlineClubTweaks.user.js
-// @grant        none
+// @resource     jqUI_CSS https://ajax.googleapis.com/ajax/libs/jqueryui/1.13.2/themes/dark-hive/jquery-ui.css
+// @grant        GM_getResourceText
+// @grant        GM_addStyle
+// @grant        GM_setValue
+// @grant        GM_getValue
 // ==/UserScript==
-
+// @require      file://D:\Dev\AirlineClub\Airline-Club-Tweaks.user.js
 /* global $, waitForKeyElements */
 
 (function () {
 	"use strict";
 	var debug = true;
 
+	const jqUI_CssSrc = GM_getResourceText("jqUI_CSS");
 	//waitForKeyElements("#airportCanvas", airportCanvasShown);
 
 	var openAjaxRequests = 0;
@@ -36,24 +41,37 @@
 		};
 	})(XMLHttpRequest.prototype.open);
 
-	var airportProcessed = false;
+	var hangarProcessed = false;
 	var linksProcessed = false;
 	var officeProcessed = false;
+	var airportProcessed = false;
 
 	var currentAirline = "";
-	var modifiedHtml = false;
 	var airlineLinks;
+	var settings;
 	var vanilla = true;
 
 	$(document).ready(function () {
-		setTimeout(main, 100);
+		//GM_addStyle(jqUI_CssSrc);
+		addCss(jqUI_CssSrc);
+		setTimeout(main, 50);
 	});
 
 	function main() {
+		settings = new Settings();
+		settings.refresh();
 		airlineLinks = new Links();
-		setCurrentAirline();
-		addButtons();
 
+		log("INIT");
+
+		setCurrentAirline();
+		addTopNavButtons();
+		monitorMutations();
+
+		log("INIT DONE");
+	}
+
+	function monitorMutations() {
 		const linksMutationConfig = {
 			attributes: true,
 			childList: false,
@@ -80,9 +98,21 @@
 		};
 		const officeViewObserver = new MutationObserver(officeViewMutated);
 		officeViewObserver.observe($("#officeCanvas")[0], officeMutationConfig);
+
+		const hangarMutationConfig = {
+			attributes: true,
+			childList: false,
+			subtree: false,
+			attributeFilter: ["style"],
+		};
+		const hangarViewObserver = new MutationObserver(hangarViewMutated);
+		const airplaneViewObserver = new MutationObserver(hangarViewMutated);
+
+		hangarViewObserver.observe($("#airplaneCanvas .hangar")[0], hangarMutationConfig);
+		airplaneViewObserver.observe($("#airplaneCanvas")[0], hangarMutationConfig);
 	}
 
-	function addButtons() {
+	function addTopNavButtons() {
 		var toAdd = '<span style="margin-left: 7px;"></span>';
 		var buttons = $("#main-tabs .tab-icon").each(function () {
 			var link = $(this).data("link");
@@ -92,6 +122,26 @@
 		});
 
 		$(".desktopOnly .topBarDetails span span").first().parent().append(toAdd);
+	}
+
+	function airportViewMutated(mutationList, observer) {
+		if (openAjaxRequests > 0) {
+			setTimeout(function () {
+				airportViewMutated(mutationList, observer);
+			}, 50);
+			return false;
+		}
+
+		var airportCanvas = $("#airportCanvas");
+		var mutation = mutationList[0];
+		if (airportCanvas.css("display") == "block") {
+			if (!airportProcessed) {
+				airportProcessed = true;
+				setTimeout(airportCanvasShown, 1);
+			}
+		} else {
+			airportProcessed = false;
+		}
 	}
 
 	function officeViewMutated(mutationList, observer) {
@@ -134,23 +184,24 @@
 		}
 	}
 
-	function airportViewMutated(mutationList, observer) {
+	function hangarViewMutated(mutationList, observer) {
 		if (openAjaxRequests > 0) {
 			setTimeout(function () {
-				airportViewMutated(mutationList, observer);
+				hangarViewMutated(mutationList, observer);
 			}, 50);
 			return false;
 		}
 
-		var airportCanvas = $("#airportCanvas");
+		var hangarCanvas = $("#airplaneCanvas .hangar");
+		var airplaneCanvas = $("#airplaneCanvas");
 		var mutation = mutationList[0];
-		if (airportCanvas.css("display") == "block") {
-			if (!airportProcessed) {
-				airportProcessed = true;
-				setTimeout(airportCanvasShown, 1);
+		if (airplaneCanvas.css("display") == "block" && hangarCanvas.css("display") == "block") {
+			if (!hangarProcessed) {
+				hangarProcessed = true;
+				setTimeout(hangarCanvasShown, 1);
 			}
 		} else {
-			airportProcessed = false;
+			hangarProcessed = false;
 		}
 	}
 
@@ -169,7 +220,125 @@
 		}
 	}
 
+	function hangarCanvasShown() {
+		if ($(".tweakHangar").length <= 0) {
+			$("#airplaneCanvas .toggleConditionBox").before('<span style="top:-3px;position: relative;margin-right:4px;">Condition</span>');
+			var conditionCb = $("#airplaneCanvas .toggleConditionBox").next().after(` <span style="top:-3px;position: relative; margin-left:17px;">
+            <span class= "tweakHangar" id="sliderCondition" style="display:inline-flex; width:160px; top:4px;"></span>
+            <input type="text" id="conditionRange" readonly style="border:0; color:#f6931f; font-weight:bold; width:52px;margin-left:15px">
+            <div id="autoReplace" class="button" >Set with Auto (<span id="autoReplaceValue">N/A</span>)</div>
+            <div id="slidersReset" class="button" >Reset filters</div>
+            </span>`);
+
+			$("#airplaneCanvas .toggleUtilizationRateBox").before('<span style="top:-3px;position: relative;margin-right:4px;">Usage</span>');
+			var usageCb = $("#airplaneCanvas .toggleUtilizationRateBox").next().after(` <span style="top:-3px;position: relative; margin-left:17px;">
+            <span class= "tweakHangar" id="sliderUsage" style="display:inline-flex; width:160px; top:4px;"></span>
+            <input type="text" id="usageRange" readonly style="border:0; color:#f6931f; font-weight:bold; width:52px;margin-left:15px;margin-right:35px">
+            </span>`);
+			$("#sliderCondition").slider({
+				range: true,
+				min: 0,
+				max: 100,
+				values: [0, 100],
+				slide: function (event, ui) {
+					$("#conditionRange").val("" + ui.values[0] + " - " + ui.values[1]);
+				},
+				change: function (event, ui) {
+					$("#conditionRange").val("" + ui.values[0] + " - " + ui.values[1]);
+					hangarSliderChanged();
+				},
+			});
+			$("#conditionRange").val("" + $("#sliderCondition").slider("values", 0) + " - " + $("#sliderCondition").slider("values", 1));
+
+			$("#sliderUsage").slider({
+				range: true,
+				min: 0,
+				max: 100,
+				values: [0, 100],
+				slide: function (event, ui) {
+					$("#usageRange").val("" + ui.values[0] + " - " + ui.values[1]);
+				},
+				change: function (event, ui) {
+					$("#usageRange").val("" + ui.values[0] + " - " + ui.values[1]);
+					hangarSliderChanged();
+				},
+			});
+			$("#usageRange").val("" + $("#sliderUsage").slider("values", 0) + " - " + $("#sliderUsage").slider("values", 1));
+		}
+
+		$("#slidersReset").click(function () {
+			$("#sliderCondition").slider("option", "values", [0, 100]);
+			$("#sliderUsage").slider("option", "values", [0, 100]);
+		});
+
+		if (settings.autoReplaceValue > 0) {
+			$("#autoReplaceValue").text(settings.autoReplaceValue + "%");
+			$("#autoReplace").click(function () {
+				$("#sliderCondition").slider("option", "values", [settings.autoReplaceValue, settings.autoReplaceValue + 5]);
+				$("#sliderUsage").slider("option", "values", [0, 100]);
+			});
+			$("#autoReplace").attr("class", "button");
+		} else {
+			$("#autoReplaceValue").text("N/A");
+			$("#autoReplace").attr("class", "button disabled");
+			$("#autoReplace").attr("title", "Visit the office first and set a replacement target.");
+
+			$("#autoReplace").off("click");
+		}
+		hangarSliderChanged();
+	}
+
+	function hangarSliderChanged() {
+		const minCondition = $("#sliderCondition").slider("values", 0);
+		const maxCondition = $("#sliderCondition").slider("values", 1);
+		const minUsage = $("#sliderUsage").slider("values", 0);
+		const maxUsage = $("#sliderUsage").slider("values", 1);
+		log(`Slider changed min: ${minCondition}, max: ${maxCondition}`);
+
+		$("#airplaneCanvas .hangar .sectionContainer .section").each(function () {
+			let total = 0;
+			let shown = 0;
+			let minConditionOfType = 100;
+			let maxConditionOfType = 0;
+			$(this)
+				.find(".airplaneIcon")
+				.each(function () {
+					let title = $(this).attr("title");
+					let split = title.split(" ");
+					let condition = parseFloat(split[2].replace("%", ""));
+					if (condition < minConditionOfType) minConditionOfType = condition;
+					if (condition > maxConditionOfType) maxConditionOfType = condition;
+					let usage = parseFloat(split[4].replace("%", ""));
+					total++;
+					if (condition >= minCondition && condition <= maxCondition && usage >= minUsage && usage <= maxUsage) {
+						$(this).parent().css("display", "block");
+						shown++;
+					} else {
+						$(this).parent().css("display", "none");
+					}
+				});
+			if (shown <= 0) {
+			} else {
+			}
+
+			let title = $(this).find("h4").next();
+			if (!$(title).hasClass("tweakHangar")) {
+				$(this).find("h4").after('<span class="tweakHangar" style=""></span>');
+				title = $(this).find(".tweakHangar");
+				$(this).find("h4").css("display", "inline-block");
+			}
+			title.text(` (${shown}/${total}, min: ${minConditionOfType}, max: ${maxConditionOfType})`);
+		});
+	}
+
 	function officeCanvasShown() {
+		let autoReplaceString = $("#airplaneRenewal").text();
+		if (autoReplaceString.includes("%")) {
+			//.replace("%", "");
+			settings.autoReplaceValue = parseInt(autoReplaceString.split(" ")[1]);
+		} else settings.autoReplaceValue = 0;
+		settings.save();
+
 		var basesTableRoot = $('h4:contains("Airline Bases")').next("div");
 		if ($(".tweakOffice").length <= 0) {
 			$(basesTableRoot).find(".table-header .cell:eq(0)").css("width", "7%");
@@ -470,5 +639,45 @@
 		profit = 0;
 		lf = 0;
 		sf = 0;
+	}
+
+	class Settings {
+		autoReplaceValue = 0;
+
+		refresh() {
+			this.autoReplaceValue = GM_getValue("autoReplaceValue", 0);
+			log("Loading replace value with " + this.autoReplaceValue);
+			//https://stackoverflow.com/questions/39139448/preserve-variables-set-within-userscript
+		}
+
+		save() {
+			GM_setValue("autoReplaceValue", this.autoReplaceValue);
+			log("Settings replace value with " + this.autoReplaceValue);
+		}
+	}
+
+	function getSlidersVals() {
+		// Get slider values
+		var parent = this.parentNode;
+		var slides = parent.getElementsByTagName("input");
+		var slide1 = parseFloat(slides[0].value);
+		var slide2 = parseFloat(slides[1].value);
+		// Neither slider will clip the other, so make sure we determine which is larger
+		if (slide1 > slide2) {
+			var tmp = slide2;
+			slide2 = slide1;
+			slide1 = tmp;
+		}
+
+		var displayElement = parent.getElementsByClassName("rangeValues")[0];
+		displayElement.innerHTML = slide1 + " - " + slide2;
+	}
+
+	function addCss(cssString) {
+		var head = document.getElementsByTagName("head")[0];
+		var newCss = document.createElement("style");
+		newCss.type = "text/css";
+		newCss.innerHTML = cssString;
+		head.appendChild(newCss);
 	}
 })();
